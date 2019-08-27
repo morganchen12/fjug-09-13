@@ -36,6 +36,9 @@ class PostViewModel {
   private let reference: DocumentReference
   private(set) var post: Post
 
+  private let updateTimeThreshold: TimeInterval = 3
+  private var lastUpdateTime: TimeInterval = -1
+
   init(reference: DocumentReference, post: Post) {
     self.reference = reference
     self.post = post
@@ -82,7 +85,16 @@ class PostViewModel {
     listen { [unowned self] (post, error) in
       guard let post = post else { return }
       self.post = post
-      self.populate(cell: cell)
+
+      let currentMediaTime = CACurrentMediaTime() as TimeInterval
+      let shouldUpdate = self.lastUpdateTime < 0 ||
+          currentMediaTime - self.lastUpdateTime > self.updateTimeThreshold ||
+          currentMediaTime < self.lastUpdateTime
+
+      if shouldUpdate {
+        self.lastUpdateTime = currentMediaTime
+        self.populate(cell: cell)
+      }
     }
   }
 
